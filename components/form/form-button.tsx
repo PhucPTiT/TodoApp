@@ -25,6 +25,7 @@ export const FormSubmit = ({
             type = "submit"
             variant = {variant}
             size = "sm"
+            className={className}
         >
             {children}
         </Button>
