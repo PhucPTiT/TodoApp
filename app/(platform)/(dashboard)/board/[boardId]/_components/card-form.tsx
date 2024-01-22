@@ -13,15 +13,15 @@ import { useEventListener, useOnClickOutside } from "usehooks-ts";
 
 interface CardFormProps {
     listId: string;
-    enabledEditing: () => void;
-    disabledEditing: () => void;
+    enableEditing: () => void;
+    disableEditing: () => void;
     isEditing: boolean;
 }
 
 export const CardForm = forwardRef<HTMLTextAreaElement, CardFormProps> (({
     listId,
-    enabledEditing,
-    disabledEditing,
+    enableEditing,
+    disableEditing,
     isEditing,
 }, ref) => {
     const params = useParams();
@@ -39,11 +39,11 @@ export const CardForm = forwardRef<HTMLTextAreaElement, CardFormProps> (({
 
     const onKeyDown = (event: KeyboardEvent) => {
         if(event.key === "Escape") {
-            disabledEditing();
+            disableEditing();
         }
     }
 
-    useOnClickOutside(formRef, disabledEditing);
+    useOnClickOutside(formRef, disableEditing);
     useEventListener("keydown", onKeyDown);
 
     const onTextAreaKeyDown: KeyboardEventHandler<HTMLTextAreaElement> = (e) => {
@@ -84,7 +84,7 @@ export const CardForm = forwardRef<HTMLTextAreaElement, CardFormProps> (({
                         Add Cart
                     </FormSubmit>
                     <Button
-                        onClick={disabledEditing}
+                        onClick={disableEditing}
                         size="sm"
                         variant="ghost"
                     >
@@ -98,7 +98,7 @@ export const CardForm = forwardRef<HTMLTextAreaElement, CardFormProps> (({
     return (
         <div className="pt-2 px-2">
             <Button
-                onClick={enabledEditing}
+                onClick={enableEditing}
                 className="h-auto px-2 py-1.5 w-full justify-start text-muted-foreground text-sm"
                 size = "sm"
                 variant="ghost"
