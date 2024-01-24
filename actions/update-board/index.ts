@@ -1,42 +1,53 @@
-"use server"
+"use server";
 
 import { auth } from "@clerk/nextjs";
-import { InputType, ReturnType } from "./type"
-import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
-import { UpdateBoard } from "./schema";
+
+import { db } from "@/lib/db";
 import { createSafeAction } from "@/lib/create-safe-action";
 
-const handler = async (data: InputType): Promise<ReturnType> => {
-    const {userId, orgId} = auth();
+import { UpdateBoard } from "./schema";
+import { InputType, ReturnType } from "./type";
+import { createAuditLog } from "@/lib/create-audit-log";
+import { ACTION, ENTITY_TYPE } from "@prisma/client";
 
-    if(!userId || !orgId) {
+const handler = async (data: InputType): Promise<ReturnType> => {
+    const { userId, orgId } = auth();
+
+    if (!userId || !orgId) {
         return {
-            error: "Unauthorlized"
-        }
+            error: "Unauthorized",
+        };
     }
 
-    const {title, id } = data;
+    const { title, id } = data;
     let board;
-    
+
     try {
         board = await db.board.update({
             where: {
                 id,
                 orgId,
-            }, 
+            },
             data: {
                 title,
-            }
-        })
-    } catch(error) {
+            },
+        });
+
+        await createAuditLog({
+            entityTitle: board.title,
+            entityId: board.id,
+            entityType: ENTITY_TYPE.BOARD,
+            action: ACTION.UPDATE,
+        });
+    } catch (error) {
         return {
-            error: "Failed to update"
-        }
+            error: "Failed to update.",
+        };
     }
 
-    revalidatePath(`/board/${board.id}`)
-    return {data: board};
-}
+    revalidatePath(`/board/${id}`);
+    return { data: board };
+};
 
-export const updateBoard = createSafeAction(UpdateBoard, handler)
+export const updateBoard = createSafeAction(UpdateBoard, handler);

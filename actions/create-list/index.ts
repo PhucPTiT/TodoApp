@@ -2,14 +2,14 @@
 
 import { auth } from "@clerk/nextjs";
 import { revalidatePath } from "next/cache";
-import { ACTION, ENTITY_TYPE } from "@prisma/client";
 
 import { db } from "@/lib/db";
-import { createAuditLog } from "@/lib/create-audit-log";
 import { createSafeAction } from "@/lib/create-safe-action";
 
-import { CopyList } from "./schema";
+import { CreateList } from "./schema";
 import { InputType, ReturnType } from "./type";
+import { createAuditLog } from "@/lib/create-audit-log";
+import { ACTION, ENTITY_TYPE } from "@prisma/client";
 
 const handler = async (data: InputType): Promise<ReturnType> => {
     const { userId, orgId } = auth();
@@ -20,29 +20,25 @@ const handler = async (data: InputType): Promise<ReturnType> => {
         };
     }
 
-    const { id, boardId } = data;
+    const { title, boardId } = data;
     let list;
 
     try {
-        const listToCopy = await db.list.findUnique({
+        const board = await db.board.findUnique({
             where: {
-                id,
-                boardId,
-                board: {
-                    orgId,
-                },
-            },
-            include: {
-                cards: true,
+                id: boardId,
+                orgId,
             },
         });
 
-        if (!listToCopy) {
-            return { error: "List not found" };
+        if (!board) {
+            return {
+                error: "Board not found",
+            };
         }
 
         const lastList = await db.list.findFirst({
-            where: { boardId },
+            where: { boardId: boardId },
             orderBy: { order: "desc" },
             select: { order: true },
         });
@@ -51,21 +47,9 @@ const handler = async (data: InputType): Promise<ReturnType> => {
 
         list = await db.list.create({
             data: {
-                boardId: listToCopy.boardId,
-                title: `${listToCopy.title} - Copy`,
+                title,
+                boardId,
                 order: newOrder,
-                cards: {
-                    createMany: {
-                        data: listToCopy.cards.map((card) => ({
-                            title: card.title,
-                            description: card.description,
-                            order: card.order,
-                        })),
-                    },
-                },
-            },
-            include: {
-                cards: true,
             },
         });
 
@@ -77,7 +61,7 @@ const handler = async (data: InputType): Promise<ReturnType> => {
         });
     } catch (error) {
         return {
-            error: "Failed to copy.",
+            error: "Failed to create.",
         };
     }
 
@@ -85,4 +69,4 @@ const handler = async (data: InputType): Promise<ReturnType> => {
     return { data: list };
 };
 
-export const copyList = createSafeAction(CopyList, handler);
+export const createList = createSafeAction(CreateList, handler);

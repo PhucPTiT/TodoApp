@@ -9,10 +9,10 @@ import { useParams, useRouter } from "next/navigation";
 import { FormSubmit } from "@/components/form/form-submit";
 import { Button } from "@/components/ui/button";
 import { useAction } from "@/hooks/use-action";
-import { creatList } from "@/actions/creat-list";
+import { createList } from "@/actions/create-list";
 import { toast } from "sonner";
 
-export const ListForm =() => {
+export const ListForm = () => {
     const params = useParams();
     const router = useRouter();
     const formRef = useRef<ElementRef<"form">>(null);
@@ -30,7 +30,7 @@ export const ListForm =() => {
         setIsEditing(false);
     }
 
-    const {execute, fieldErrors} = useAction(creatList, {
+    const { execute, fieldErrors } = useAction(createList, {
         onSuccess: (data) => {
             toast.success(`List "${data.title}" created`);
             disableEditing();
@@ -44,7 +44,6 @@ export const ListForm =() => {
     const onSubmit = (formData: FormData) => {
         const title = formData.get("title") as string;
         const boardId = formData.get("boardId") as string;
-        console.log(boardId)
 
         execute({
             title,
@@ -53,7 +52,7 @@ export const ListForm =() => {
     }
 
     const onKeyDown = (e: KeyboardEvent) => {
-        if(e.key === "Escape") {
+        if (e.key === "Escape") {
             disableEditing();
         }
     }
@@ -61,26 +60,26 @@ export const ListForm =() => {
     useEventListener("keydown", onKeyDown);
     useOnClickOutside(formRef, disableEditing)
 
-    if(isEditing) {
-        return(
+    if (isEditing) {
+        return (
             <ListWrapper>
                 <form
-                    action = {onSubmit}
-                    ref = {formRef}
+                    action={onSubmit}
+                    ref={formRef}
                     className="w-full p-3 rounded-md bg-white space-y-4 shadow-md"
                 >
                     <FormInput
-                        ref = {inputRef}
-                        id = "title"
+                        ref={inputRef}
+                        id="title"
                         errors={fieldErrors}
                         className="text-sm px-2 py-1 h-7 font-medium border-transparent hover:border-input focus:border-input transition"
                         placeholder="Enter list title ..."
                     />
                     <input
                         hidden
-                        value = {params.boardId}
-                        name = "boardId"
-                        onChange={() => {}}
+                        value={params.boardId}
+                        name="boardId"
+                        onChange={() => { }}
                     />
                     <div className="flex items-center gap-x-1">
                         <FormSubmit>
@@ -88,10 +87,10 @@ export const ListForm =() => {
                         </FormSubmit>
                         <Button
                             onClick={disableEditing}
-                            size = "sm"
+                            size="sm"
                             variant="ghost"
                         >
-                            <X className="h-5 w-5"/>
+                            <X className="h-5 w-5" />
                         </Button>
                     </div>
                 </form>
@@ -100,12 +99,12 @@ export const ListForm =() => {
     }
     return (
         <ListWrapper>
-            <button 
+            <button
                 onClick={enableEditing}
                 className="w-full rounded-md bg-white/80 hover:bg-white/50
                 transition p-3 flex items-center font-medium text-sm
             ">
-                <Plus className="h-4 w-4 mr-2"/>
+                <Plus className="h-4 w-4 mr-2" />
                 Add a list
             </button>
         </ListWrapper>

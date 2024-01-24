@@ -1,24 +1,28 @@
-"use server"
+"use server";
 
 import { auth } from "@clerk/nextjs";
-import { InputType, ReturnType } from "./type"
-import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
-import { UpdateList } from "./schema";
+
+import { db } from "@/lib/db";
 import { createSafeAction } from "@/lib/create-safe-action";
 
-const handler = async (data: InputType): Promise<ReturnType> => {
-    const {userId, orgId} = auth();
+import { UpdateList } from "./schema";
+import { InputType, ReturnType } from "./type";
+import { createAuditLog } from "@/lib/create-audit-log";
+import { ACTION, ENTITY_TYPE } from "@prisma/client";
 
-    if(!userId || !orgId) {
+const handler = async (data: InputType): Promise<ReturnType> => {
+    const { userId, orgId } = auth();
+
+    if (!userId || !orgId) {
         return {
-            error: "Unauthorlized"
-        }
+            error: "Unauthorized",
+        };
     }
 
-    const {title, id, boardId } = data;
+    const { title, id, boardId } = data;
     let list;
-    
+
     try {
         list = await db.list.update({
             where: {
@@ -26,20 +30,27 @@ const handler = async (data: InputType): Promise<ReturnType> => {
                 boardId,
                 board: {
                     orgId,
-                }
-            }, 
+                },
+            },
             data: {
                 title,
-            }
-        })
-    } catch(error) {
+            },
+        });
+
+        await createAuditLog({
+            entityTitle: list.title,
+            entityId: list.id,
+            entityType: ENTITY_TYPE.CARD,
+            action: ACTION.UPDATE,
+        });
+    } catch (error) {
         return {
-            error: "Failed to update"
-        }
+            error: "Failed to update.",
+        };
     }
 
-    revalidatePath(`/board/${boardId}`)
-    return {data: list};
-}
+    revalidatePath(`/board/${boardId}`);
+    return { data: list };
+};
 
-export const updateList = createSafeAction(UpdateList, handler)
+export const updateList = createSafeAction(UpdateList, handler);
